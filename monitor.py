@@ -118,6 +118,7 @@ DEFAULT_CONFIG = {
     "digest_sched_enabled":  False,
     "digest_time":           "08:00",
     "digest_popup":          True,
+    "digest_max_subjects":   20,     # max unread subjects shown per folder (0 = all)
     "digest_last_run_date":  "",
 
     # Duplicate Email Detector
@@ -152,7 +153,7 @@ DEFAULT_CONFIG = {
 
     # app
     "appearance": "Light",
-    "close_action": "ask",
+    "close_action": "auto",
 }
 
 FONT_H1    = ("Segoe UI", 14, "bold")
@@ -162,6 +163,251 @@ FONT_LOG   = ("Consolas", 11)
 
 COLOR_SUBTLE = ("#444444", "#aaaaaa")
 COLOR_STATUS = ("#1a1a1a", "#dddddd")
+
+
+# ── Scrollable ComboBox ────────────────────────────────────────────────────────
+# customtkinter's CTkComboBox dropdown only supports clicking tiny arrow
+# buttons to scroll — mousewheel is not wired up. This subclass patches
+# that by binding <MouseWheel> to every widget inside the dropdown toplevel
+# once it opens, forwarding scroll events to the internal canvas.
+
+class DropdownComboBox(ctk.CTkFrame):
+    """Custom combobox whose dropdown is a CTkScrollableFrame.
+
+    CTkScrollableFrame handles mousewheel scrolling natively — no arrow
+    buttons, no binding hacks, no internal-attribute lookups. The widget is
+    API-compatible with the places CTkComboBox was used: configure(values=,
+    state=, command=), grid(), get(), the bound StringVar.
+
+    The dropdown closes on outside-click or when an item is selected.
+    """
+
+    def __init__(self, parent, variable=None, values=None, width=300,
+                 command=None, **kwargs):
+        # Strip kwargs CTkFrame doesn't understand (font, dropdown_*, etc.)
+        frame_kw = {k: v for k, v in kwargs.items()
+                    if k in ("corner_radius", "border_width", "border_color",
+                             "fg_color", "bg_color")}
+        super().__init__(parent, fg_color="transparent",
+                         width=width, height=30, **frame_kw)
+        self.grid_propagate(False)
+        self.pack_propagate(False)
+
+        self._var   = variable if variable is not None else tk.StringVar()
+        self._vals  = list(values) if values else []
+        self._cmd   = command
+        self._width = width
+        self._win          = None   # open dropdown Toplevel
+        self._poll_after_id = None  # after() id for focus-polling loop
+        self._main_click_id = None  # funcid for main-window Button-1 binding
+        self._disabled = False
+
+        # ── Widget: entry-like button + chevron ──────────────────────────
+        self._main_btn = ctk.CTkButton(
+            self, textvariable=self._var, anchor="w",
+            width=width - 32, height=28,
+            fg_color=("gray86", "gray17"),
+            text_color=("gray10", "gray90"),
+            hover_color=("gray80", "gray25"),
+            border_width=2, border_color=("gray65", "gray45"),
+            corner_radius=6, font=FONT_SMALL,
+            command=self._toggle)
+        self._main_btn.pack(side="left", fill="x", expand=True)
+
+        self._arrow_btn = ctk.CTkButton(
+            self, text="▾", width=30, height=28,
+            fg_color=("gray86", "gray17"),
+            text_color=("gray40", "gray60"),
+            hover_color=("gray80", "gray25"),
+            border_width=2, border_color=("gray65", "gray45"),
+            corner_radius=6,
+            command=self._toggle)
+        self._arrow_btn.pack(side="left")
+
+    # ── Public API (CTkComboBox-compatible) ───────────────────────────────
+
+    def configure(self, **kwargs):
+        if "values" in kwargs:
+            self._vals = list(kwargs.pop("values"))
+        if "state" in kwargs:
+            s = kwargs.pop("state")
+            self._disabled = (s == "disabled")
+            st = "disabled" if self._disabled else "normal"
+            self._main_btn.configure(state=st)
+            self._arrow_btn.configure(state=st)
+        if "variable" in kwargs:
+            self._var = kwargs.pop("variable")
+            self._main_btn.configure(textvariable=self._var)
+        if "command" in kwargs:
+            self._cmd = kwargs.pop("command")
+        if "width" in kwargs:
+            self._width = kwargs.pop("width")
+            self._main_btn.configure(width=self._width - 32)
+        if "font" in kwargs:
+            self._main_btn.configure(font=kwargs.pop("font"))
+        kwargs.pop("dropdown_font", None)       # ignore ctk-specific kwargs
+        kwargs.pop("dropdown_hover_color", None)
+        kwargs.pop("dropdown_fg_color", None)
+        kwargs.pop("button_color", None)
+        kwargs.pop("button_hover_color", None)
+        if kwargs:
+            try:
+                super().configure(**kwargs)
+            except Exception:
+                pass
+
+    def get(self):   return self._var.get()
+    def set(self, v): self._var.set(v)
+
+    # ── Dropdown open/close ───────────────────────────────────────────────
+
+    def _toggle(self):
+        if self._disabled:
+            return
+        if self._win and self._win.winfo_exists():
+            self._close()
+        else:
+            self._open()
+
+    def _open(self):
+        if not self._vals:
+            return
+        self.update_idletasks()
+        rx = self.winfo_rootx()
+        ry = self.winfo_rooty() + self.winfo_height()
+
+        # Measure the widest item so the dropdown expands to show full paths.
+        try:
+            import tkinter.font as tkfont
+            f = tkfont.Font(family="Segoe UI", size=11)
+            max_text_px = max(f.measure(v) for v in self._vals)
+            content_w = max_text_px + 80
+        except Exception:
+            content_w = self._width
+
+        screen_w = self.winfo_screenwidth()
+        w = max(self._width, content_w)
+        w = min(w, screen_w - rx - 10)
+
+        self._win = tk.Toplevel(self)
+        self._win.wm_overrideredirect(True)
+        self._win.attributes("-topmost", True)
+
+        outer = ctk.CTkFrame(self._win, corner_radius=8,
+                              border_width=1,
+                              border_color=("gray65", "gray45"))
+        outer.pack(fill="both", expand=True)
+
+        item_h  = 30
+        visible = min(len(self._vals), 12)
+        sf = ctk.CTkScrollableFrame(outer, height=visible * item_h,
+                                     width=w - 8,
+                                     fg_color=("gray92", "gray14"))
+        sf.pack(fill="both", expand=True, padx=2, pady=2)
+
+        for val in self._vals:
+            ctk.CTkButton(
+                sf, text=val, anchor="w",
+                height=item_h,
+                fg_color="transparent",
+                text_color=("gray10", "gray90"),
+                hover_color=("gray82", "gray22"),
+                corner_radius=4, font=FONT_SMALL,
+                command=lambda v=val: self._select(v)
+            ).pack(fill="x", padx=2, pady=1)
+
+        total_h = visible * item_h + 12
+        self._win.geometry(f"{w}x{total_h}+{rx}+{ry}")
+
+        # Set yscrollincrement so 1 unit = 1 item row.
+        # Default Tk canvas yscrollincrement is 1 pixel, which makes
+        # yview_scroll feel extremely slow no matter the multiplier.
+        try:
+            sf._parent_canvas.configure(yscrollincrement=item_h)
+        except Exception:
+            pass
+
+        # ── Mousewheel isolation ─────────────────────────────────────────
+        def _dropdown_scroll(e, _sf=sf):
+            try:
+                # 3 rows per scroll notch — feels like a normal list.
+                notches = int(-1 * (e.delta / 120))
+                _sf._parent_canvas.yview_scroll(notches * 3, "units")
+            except Exception:
+                pass
+            return "break"
+        self._win.bind("<MouseWheel>", _dropdown_scroll)
+        outer.bind("<MouseWheel>", _dropdown_scroll)
+
+        # ── Close detection ─────────────────────────────────────────────
+        # NO grab_set — that holds Tk-level focus artificially, which breaks
+        # focus_displayof() and caused ctypes HWND mismatches.
+        #
+        # Within-app outside click: bind <Button-1> on the MAIN window.
+        # The dropdown is a separate Toplevel so clicks inside it never
+        # propagate to the main window — only outside clicks reach this.
+        self._win.bind("<Escape>", lambda e: self._close())
+        main = self.winfo_toplevel()
+        self._main_click_id = main.bind(
+            "<Button-1>",
+            lambda e: self.after(10, self._close),   # slight delay so the
+            add="+")                                  # clicked button's command
+                                                      # fires before we close
+
+        # App-switch: without grab_set, focus_displayof() correctly returns
+        # None the instant another OS window becomes active.
+        self._poll_after_id = self.after(200, self._poll_focus)
+
+    def _poll_focus(self):
+        """Poll every 200 ms; close if the app lost OS-level focus."""
+        if not self._win:
+            return
+        try:
+            if not self._win.winfo_exists():
+                return
+            if self.winfo_toplevel().focus_displayof() is None:
+                self._close()
+                return
+        except Exception:
+            pass
+        self._poll_after_id = self.after(200, self._poll_focus)
+
+    def _global_click(self, event):
+        """Kept for compatibility but no longer used (no grab_set)."""
+        pass
+
+    def _select(self, value):
+        self._var.set(value)
+        self._close()
+        if self._cmd:
+            self._cmd(value)
+
+    def _close(self):
+        # Cancel the focus-polling loop.
+        if self._poll_after_id:
+            try:
+                self.after_cancel(self._poll_after_id)
+            except Exception:
+                pass
+            self._poll_after_id = None
+        # Remove the main-window click binding (specific funcid, not unbind_all).
+        if self._main_click_id:
+            try:
+                self.winfo_toplevel().unbind("<Button-1>", self._main_click_id)
+            except Exception:
+                pass
+            self._main_click_id = None
+        # Destroy the dropdown window.
+        try:
+            if self._win:
+                self._win.destroy()
+        except Exception:
+            pass
+        self._win = None
+
+
+# All existing code already uses ScrollableComboBox — keep the name as an alias.
+ScrollableComboBox = DropdownComboBox
 
 # About page palette (matches calculator suite style)
 NAV_BG  = "#1F3864"
@@ -352,12 +598,34 @@ def play_sound(sound_type: str, wav_path: str = ""):
             pass
     threading.Thread(target=_play, daemon=True).start()
 
-def fire_notification(title, msg, sound_type="Exclamation", wav_path=""):
+def fire_notification(title, msg, sound_type="Exclamation", wav_path="",
+                       app_ref=None):
+    """Play the alert sound and show a real dismissable popup window.
+    If app_ref is supplied the popup is a proper CTkToplevel; otherwise
+    it falls back to a plain tk.Toplevel so it works from any thread context.
+    plyer toast is no longer used — it produced a system-tray slider that
+    couldn't be clicked or read properly."""
     play_sound(sound_type, wav_path)
-    try:
-        notification.notify(title=title, message=msg,
-                            app_name="Beeran\u2019s Outlook Tools", timeout=8)
-    except Exception: pass
+    # Schedule the popup on the main thread so Tk is happy.
+    def _show():
+        try:
+            NotificationDialog(title=title, message=msg)
+        except Exception:
+            pass
+    if app_ref is not None:
+        app_ref.after(0, _show)
+    else:
+        # Called from a background thread with no app ref — use after() on
+        # the default Tk root if available, else best-effort direct call.
+        try:
+            import tkinter as _tk
+            root = _tk._default_root
+            if root:
+                root.after(0, _show)
+            else:
+                _show()
+        except Exception:
+            pass
 
 # ── Tray ───────────────────────────────────────────────────────────────────────
 
@@ -692,7 +960,7 @@ class App(ctk.CTk):
                      text_color=COLOR_STATUS).grid(row=0, column=0, sticky="w",
                      padx=8, pady=5)
         acc_var = tk.StringVar(value=slot_cfg["account"])
-        acc_cb = ctk.CTkComboBox(body, variable=acc_var,
+        acc_cb = ScrollableComboBox(body, variable=acc_var,
                                   values=list(self._folder_map.keys()) or [],
                                   width=280)
         acc_cb.grid(row=0, column=1, sticky="w", padx=8, pady=5)
@@ -702,7 +970,7 @@ class App(ctk.CTk):
                      text_color=COLOR_STATUS).grid(row=1, column=0, sticky="w",
                      padx=8, pady=5)
         fld_var = tk.StringVar(value=slot_cfg["folder"])
-        fld_cb = ctk.CTkComboBox(body, variable=fld_var,
+        fld_cb = ScrollableComboBox(body, variable=fld_var,
                                   values=self._folder_map.get(slot_cfg["account"], []) or [],
                                   width=280)
         fld_cb.grid(row=1, column=1, sticky="w", padx=8, pady=5)
@@ -734,7 +1002,7 @@ class App(ctk.CTk):
         ctk.CTkCheckBox(snd_row, text="", variable=snd_en_var, width=28).pack(side="left")
 
         snd_type_var = tk.StringVar(value=slot_cfg["sound_type"])
-        snd_cb = ctk.CTkComboBox(snd_row, variable=snd_type_var,
+        snd_cb = ScrollableComboBox(snd_row, variable=snd_type_var,
                                   values=ALL_SOUND_NAMES, width=160)
         snd_cb.pack(side="left", padx=(4,4))
 
@@ -768,7 +1036,7 @@ class App(ctk.CTk):
         rpt_row.grid(row=4, column=1, sticky="w", padx=8, pady=5)
 
         repeat_var = tk.StringVar(value=slot_cfg.get("repeat", "No repeat"))
-        repeat_cb  = ctk.CTkComboBox(rpt_row, variable=repeat_var,
+        repeat_cb  = ScrollableComboBox(rpt_row, variable=repeat_var,
                                       values=REPEAT_OPTIONS, width=160)
         repeat_cb.pack(side="left")
         ctk.CTkLabel(rpt_row,
@@ -962,7 +1230,8 @@ class App(ctk.CTk):
                                 "Beeran\u2019s Outlook Tools \u2014 No Mail",
                                 msg,
                                 sound_type="Silent",
-                                wav_path="")
+                                wav_path="",
+                                app_ref=self)
                     else:
                         # Mail arrived — clear repeat tracker for this folder
                         last_alert_time.pop(s["folder"], None)
@@ -1241,14 +1510,14 @@ class App(ctk.CTk):
 
         _lbl(frm, "Account:", 0)
         self.srch_acc_var = tk.StringVar()
-        self.srch_acc_cb = ctk.CTkComboBox(frm, variable=self.srch_acc_var,
+        self.srch_acc_cb = ScrollableComboBox(frm, variable=self.srch_acc_var,
                                             values=[], width=320,
                                             command=self._on_srch_acc)
         self.srch_acc_cb.grid(row=0, column=1, sticky="w", padx=8, pady=8)
 
         _lbl(frm, "Folder:", 1)
         self.srch_fld_var = tk.StringVar(value="All Folders")
-        self.srch_fld_cb = ctk.CTkComboBox(frm, variable=self.srch_fld_var,
+        self.srch_fld_cb = ScrollableComboBox(frm, variable=self.srch_fld_var,
                                             values=["All Folders"], width=320)
         self.srch_fld_cb.grid(row=1, column=1, sticky="w", padx=8, pady=8)
 
@@ -1533,7 +1802,15 @@ class App(ctk.CTk):
         self.dg_popup_var = tk.BooleanVar(value=self.cfg["digest_popup"])
         ctk.CTkCheckBox(sfrm, text="Show Windows popup notification with summary",
                         variable=self.dg_popup_var, font=FONT_LABEL
-                        ).grid(row=2, column=0, columnspan=3, sticky="w", padx=12, pady=(6,10))
+                        ).grid(row=2, column=0, columnspan=3, sticky="w", padx=12, pady=(6,4))
+
+        max_row = ctk.CTkFrame(sfrm, fg_color="transparent")
+        max_row.grid(row=3, column=0, columnspan=3, sticky="w", padx=12, pady=(0,10))
+        ctk.CTkLabel(max_row, text="Show up to", font=FONT_LABEL).pack(side="left")
+        self.dg_max_var = tk.StringVar(value=str(self.cfg.get("digest_max_subjects", 20)))
+        ctk.CTkEntry(max_row, textvariable=self.dg_max_var, width=55).pack(side="left", padx=(6,6))
+        ctk.CTkLabel(max_row, text="unread subjects per folder  (0 = show all)",
+                     font=FONT_LABEL).pack(side="left")
 
         br = ctk.CTkFrame(p, fg_color="transparent"); br.pack(anchor="w", padx=20, pady=(0,6))
         ctk.CTkButton(br, text="📰  Run Digest Now", width=160,
@@ -1574,37 +1851,75 @@ class App(ctk.CTk):
             self.after(0, lambda: self.dg_status_var.set(
                 "⚠  Pick an account and at least one folder.")); return
         try:
+            # Build today's date range in the format Outlook's DASL filter
+            # expects — avoids any pywintypes/stdlib timezone mismatch entirely.
+            today = datetime.date.today()
+            tomorrow = today + datetime.timedelta(days=1)
+            # Outlook Restrict date format: "MM/DD/YYYY HH:MM AM/PM"
+            today_str    = today.strftime("%m/%d/%Y")
+            tomorrow_str = tomorrow.strftime("%m/%d/%Y")
+            restrict_filter = (
+                f"[ReceivedTime] >= '{today_str} 12:00 AM' AND "
+                f"[ReceivedTime] < '{tomorrow_str} 12:00 AM'"
+            )
+            # 0 = show all subjects; use a huge number internally
+            max_subj = int(self.cfg.get("digest_max_subjects", 20) or 0)
+            if max_subj <= 0:
+                max_subj = 999999
+
             lines = []
             popup_lines = []
             for fpath in folders:
                 try:
                     folder = resolve_folder(acc, fpath)
-                    items = folder.Items
-                    unread = senders = 0
+                    today_items = folder.Items.Restrict(restrict_filter)
+                    count = today_items.Count
+                    received_today = count
+                    unread_today = 0
                     subjects = []
                     sender_set = set()
-                    for i in range(1, items.Count + 1):
-                        item = items[i]
-                        if getattr(item, "UnRead", False):
-                            unread += 1
+                    for i in range(1, count + 1):
+                        try:
+                            item = today_items[i]
+                            if getattr(item, "Class", None) not in (None, 43):
+                                continue
                             sender_set.add(getattr(item, "SenderName", "") or "")
-                            if len(subjects) < 5:
-                                subjects.append(getattr(item, "Subject", "(no subject)"))
+                            if getattr(item, "UnRead", False):
+                                unread_today += 1
+                                if len(subjects) < max_subj:
+                                    subjects.append(
+                                        getattr(item, "Subject", None) or "(no subject)")
+                        except Exception:
+                            continue
                     leaf = fpath.split("\\")[-1]
-                    lines.append(f"  {fpath}\n    Unread: {unread}  |  Senders: {len(sender_set)}")
-                    for s in subjects:
-                        lines.append(f"      • {s}")
-                    popup_lines.append(f"{leaf}: {unread} unread")
+                    lines.append(
+                        f"  {fpath}\n"
+                        f"    Received today: {received_today}  |  "
+                        f"Unread: {unread_today}  |  "
+                        f"Senders: {len(sender_set)}")
+                    if subjects:
+                        lines.append("    Unread subjects:")
+                        for s in subjects:
+                            lines.append(f"      • {s}")
+                        hidden = unread_today - len(subjects)
+                        if hidden > 0:
+                            lines.append(f"      … and {hidden} more unread")
+                    popup_lines.append(
+                        f"{leaf}: {received_today} received, {unread_today} unread")
                 except Exception as e:
                     lines.append(f"  {fpath}\n    ⚠  {e}")
 
-            summary = "Daily Digest — " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + "\n" + "\n".join(lines)
+            summary = ("Daily Digest — "
+                       + datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                       + "\n" + "\n".join(lines))
             self.after(0, lambda s=summary: self._show_digest_results(s))
 
             if self.cfg.get("digest_popup", True):
-                fire_notification("Beeran\u2019s Outlook Tools \u2014 Daily Digest",
-                                   "  |  ".join(popup_lines) or "No folders summarized.",
-                                   sound_type="Silent")
+                fire_notification(
+                    "Beeran\u2019s Outlook Tools \u2014 Daily Digest",
+                    summary,
+                    sound_type="Silent",
+                    app_ref=self)
         except Exception as e:
             msg = f"⚠  {e}"
             self.after(0, lambda m=msg: self.dg_status_var.set(m))
@@ -1642,7 +1957,7 @@ class App(ctk.CTk):
 
         _lbl(ef, "Match by:", 2)
         self.dm_crit_var = tk.StringVar(value=self.cfg["dupmail_criteria"])
-        ctk.CTkComboBox(ef, variable=self.dm_crit_var, values=DUPMAIL_CRITERIA, width=300,
+        ScrollableComboBox(ef, variable=self.dm_crit_var, values=DUPMAIL_CRITERIA, width=300,
                         command=self._on_dm_crit).grid(row=2, column=1, sticky="w", padx=8, pady=8)
 
         self.dm_custom_frame = ctk.CTkFrame(ef, fg_color="transparent")
@@ -1658,7 +1973,7 @@ class App(ctk.CTk):
 
         _lbl(ef, "Action on duplicates:", 4)
         self.dm_action_var = tk.StringVar(value=self.cfg["dupmail_action"])
-        ctk.CTkComboBox(ef, variable=self.dm_action_var, values=DUPMAIL_ACTIONS,
+        ScrollableComboBox(ef, variable=self.dm_action_var, values=DUPMAIL_ACTIONS,
                         width=300).grid(row=4, column=1, sticky="w", padx=8, pady=8)
 
         dmsf = ctk.CTkFrame(p, border_width=1, border_color=("#c0cfe0","#2a3a5a"))
@@ -1823,7 +2138,7 @@ class App(ctk.CTk):
         saved_strategy = self.cfg.get("dupcontact_keeper_strategy", "most_recent")
         self.dc_keeper_var = tk.StringVar(
             value=DUPCONTACT_KEEPER_LABELS.get(saved_strategy, DUPCONTACT_KEEPER_LABELS["most_recent"]))
-        ctk.CTkComboBox(cf, variable=self.dc_keeper_var,
+        ScrollableComboBox(cf, variable=self.dc_keeper_var,
                         values=list(DUPCONTACT_KEEPER_LABELS.values()),
                         width=300).grid(row=2, column=1, sticky="w", padx=8, pady=8)
         ctk.CTkLabel(p,
@@ -1834,7 +2149,7 @@ class App(ctk.CTk):
 
         _lbl(cf, "Action on duplicates:", 3)
         self.dc_action_var = tk.StringVar(value=self.cfg.get("dupcontact_action", "Log only"))
-        ctk.CTkComboBox(cf, variable=self.dc_action_var, values=DUPCONTACT_ACTIONS,
+        ScrollableComboBox(cf, variable=self.dc_action_var, values=DUPCONTACT_ACTIONS,
                         width=300).grid(row=3, column=1, sticky="w", padx=8, pady=8)
         ctk.CTkLabel(p,
                      text="  \"Delete\" and \"Merge\" both open a review window first \u2014 "
@@ -2168,10 +2483,10 @@ class App(ctk.CTk):
         af = ctk.CTkFrame(scroll); af.pack(fill="x", padx=20, pady=(4,4))
         _lbl(af, "Action on matches:", 0)
         self.be_action_var = tk.StringVar(value=self.cfg.get("bulkemail_action", "Log only"))
-        ctk.CTkComboBox(af, variable=self.be_action_var, values=BULKEMAIL_ACTIONS, width=220,
+        ScrollableComboBox(af, variable=self.be_action_var, values=BULKEMAIL_ACTIONS, width=220,
                         command=self._on_be_action).grid(row=0, column=1, sticky="w", padx=8, pady=8)
         self.be_dest_var = tk.StringVar(value=self.cfg.get("bulkemail_dest_folder", ""))
-        self.be_dest_cb = ctk.CTkComboBox(af, variable=self.be_dest_var, values=[], width=300)
+        self.be_dest_cb = ScrollableComboBox(af, variable=self.be_dest_var, values=[], width=300)
         self.be_dest_cb.grid(row=0, column=2, sticky="w", padx=8, pady=8)
         self._on_be_action(self.be_action_var.get())
 
@@ -2803,10 +3118,15 @@ class App(ctk.CTk):
                                ).grid(row=0, column=1, sticky="w", padx=8, pady=10)
 
         _lbl(frm, "On window close:", 1)
-        self.close_var = tk.StringVar(value=self.cfg.get("close_action","ask"))
-        ctk.CTkSegmentedButton(frm, values=["ask","tray","exit"],
+        self.close_var = tk.StringVar(value=self.cfg.get("close_action","auto"))
+        ctk.CTkSegmentedButton(frm, values=["auto","ask","tray","exit"],
                                variable=self.close_var
                                ).grid(row=1, column=1, sticky="w", padx=8, pady=10)
+        ctk.CTkLabel(frm,
+                     text="  auto = ask only when Monitor is active, otherwise exit  \u00b7  "
+                          "ask = always ask  \u00b7  tray = always minimize  \u00b7  exit = always exit",
+                     font=("Segoe UI", 10), text_color=COLOR_SUBTLE, justify="left"
+                     ).grid(row=2, column=0, columnspan=2, sticky="w", padx=8, pady=(0,6))
 
         ctk.CTkButton(p, text="💾  Save Settings",
                       command=self._save_all, width=160).pack(anchor="w", padx=20, pady=12)
@@ -3093,6 +3413,7 @@ class App(ctk.CTk):
             "digest_sched_enabled":   self.dg_sched_en_var.get(),
             "digest_time":            self.dg_time_var.get(),
             "digest_popup":           self.dg_popup_var.get(),
+            "digest_max_subjects":    int(self.dg_max_var.get() or 20),
 
             "dupmail_account":        self.dm_acc_var.get(),
             "dupmail_folder":         self.dm_fld_var.get(),
@@ -3132,7 +3453,13 @@ class App(ctk.CTk):
 
     def on_close(self):
         self._save_all()
-        action = self.cfg.get("close_action","ask")
+        action = self.cfg.get("close_action", "auto")
+        # "auto" = ask only if monitoring is active, otherwise exit silently
+        if action == "auto":
+            if self._mon_running:
+                action = "ask"
+            else:
+                action = "exit"
         if action == "exit": self._do_exit()
         elif action == "tray": self._go_to_tray()
         else:
@@ -3158,11 +3485,99 @@ class App(ctk.CTk):
 #  HELPER DIALOGS
 # ══════════════════════════════════════════════════════════════════════════════
 
+class NotificationDialog(ctk.CTkToplevel):
+    """A real, dismissable popup window used for all app alerts.
+    Replaces the Windows toast slider which was non-interactive and
+    auto-dismissed before the user could read it."""
+
+    def __init__(self, title="Beeran\u2019s Outlook Tools", message=""):
+        super().__init__()
+        self.title(title)
+        self.resizable(True, True)
+        self.attributes("-topmost", True)
+        try:
+            if ICON_PATH.exists():
+                self.iconbitmap(str(ICON_PATH))
+        except Exception:
+            pass
+
+        # header bar
+        hdr = ctk.CTkFrame(self, fg_color=NAV_BG, corner_radius=0)
+        hdr.pack(fill="x")
+        ctk.CTkLabel(hdr, text=title,
+                     font=ctk.CTkFont("Segoe UI", 13, "bold"),
+                     text_color="white").pack(anchor="w", padx=16, pady=10)
+
+        # message — selectable tk.Text, scrollable for long content
+        msg_frame = ctk.CTkFrame(self, fg_color="transparent")
+        msg_frame.pack(fill="both", expand=True, padx=20, pady=(14,8))
+
+        try:
+            bg_color = self._apply_appearance_mode(
+                ctk.ThemeManager.theme["CTkFrame"]["fg_color"])
+            fg_color = self._apply_appearance_mode(
+                ctk.ThemeManager.theme["CTkLabel"]["text_color"])
+        except Exception:
+            bg_color = "#ebebeb"
+            fg_color = "#1a1a1a"
+
+        msg_text = tk.Text(
+            msg_frame, wrap="word",
+            font=("Segoe UI", 12),
+            fg=fg_color, bg=bg_color,
+            bd=0, highlightthickness=0, relief="flat",
+            padx=0, pady=0, cursor="arrow",
+            selectbackground="#1f6aa5", selectforeground="white",
+            width=52)
+        msg_text.insert("1.0", message)
+        msg_text.configure(state="disabled")
+
+        # Scrollbar — shown only when content is long
+        vsb = tk.Scrollbar(msg_frame, orient="vertical", command=msg_text.yview)
+        msg_text.configure(yscrollcommand=vsb.set)
+
+        # Size text widget to content (up to a cap of 30 lines before scrolling)
+        msg_text.update_idletasks()
+        try:
+            n_display = msg_text.count("1.0", "end-1c", "displaylines")
+            n_lines = n_display[0] if n_display else 1
+        except Exception:
+            n_lines = int(msg_text.index("end-1c").split(".")[0])
+        capped = min(max(n_lines + 1, 3), 30)
+        msg_text.configure(height=capped)
+
+        if n_lines > 30:
+            vsb.pack(side="right", fill="y")
+        msg_text.pack(side="left", fill="both", expand=True)
+
+        # Allow selection and Ctrl+C/A; block editing
+        msg_text.configure(state="normal")
+        msg_text.bind("<Key>", lambda e: "break" if not (
+            (e.state & 0x4) and e.keysym.lower() in ("c","a")) else None)
+        msg_text.bind("<Button-2>", lambda e: "break")
+
+        # dismiss button
+        ctk.CTkButton(self, text="OK", width=100,
+                      command=self.destroy).pack(pady=(4,16))
+
+        # size and center — cap height so very long messages don't fill the screen
+        self.update_idletasks()
+        w = max(self.winfo_reqwidth(), 460)
+        h = min(max(self.winfo_reqheight(), 160), 560)
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        self.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
+        self.lift()
+        self.focus_force()
+
+
 class CloseDialog(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.title("Close"); self.geometry("320x160")
-        self.resizable(False,False); self.grab_set(); self.result = None
+        self.title("Close")
+        self.resizable(False, False)
+        self.grab_set()
+        self.result = None
         ctk.CTkLabel(self, text="What would you like to do?",
                      font=FONT_LABEL).pack(pady=(22,12))
         row = ctk.CTkFrame(self, fg_color="transparent"); row.pack()
@@ -3173,6 +3588,12 @@ class CloseDialog(ctk.CTkToplevel):
                       fg_color="gray40", width=100).pack(side="left", padx=6)
         ctk.CTkButton(self, text="Cancel", command=lambda: self._pick(None),
                       fg_color="transparent", width=80).pack(pady=10)
+        # Center on screen
+        self.update_idletasks()
+        w, h = 320, 160
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        self.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
     def _pick(self, val): self.result = val; self.destroy()
 
 
@@ -3187,7 +3608,7 @@ class RuleDialog(ctk.CTkToplevel):
 
         _lbl(frm, "If field:", 0)
         self.field_var = tk.StringVar(value=RULE_FIELDS[0])
-        ctk.CTkComboBox(frm, variable=self.field_var, values=RULE_FIELDS,
+        ScrollableComboBox(frm, variable=self.field_var, values=RULE_FIELDS,
                         width=200).grid(row=0, column=1, sticky="w", padx=8, pady=8)
 
         _lbl(frm, "Contains:", 1)
@@ -3197,14 +3618,14 @@ class RuleDialog(ctk.CTkToplevel):
 
         _lbl(frm, "Action:", 2)
         self.action_var = tk.StringVar(value=RULE_ACTIONS[0])
-        ctk.CTkComboBox(frm, variable=self.action_var, values=RULE_ACTIONS,
+        ScrollableComboBox(frm, variable=self.action_var, values=RULE_ACTIONS,
                         width=200, command=self._toggle_dest
                         ).grid(row=2, column=1, sticky="w", padx=8, pady=8)
 
         _lbl(frm, "Destination folder:", 3)
         self.dest_var = tk.StringVar()
         all_folders = [f for folders in parent._folder_map.values() for f in folders]
-        self.dest_cb = ctk.CTkComboBox(frm, variable=self.dest_var,
+        self.dest_cb = ScrollableComboBox(frm, variable=self.dest_var,
                                         values=all_folders, width=200)
         self.dest_cb.grid(row=3, column=1, sticky="w", padx=8, pady=8)
         self._toggle_dest(self.action_var.get())
@@ -3397,7 +3818,7 @@ class MergeReviewDialog(ctk.CTkToplevel):
                 manual_frame.pack_forget()
             refresh_preview()
 
-        ctk.CTkComboBox(strat_row, variable=strategy_var, values=self.STRATEGIES,
+        ScrollableComboBox(strat_row, variable=strategy_var, values=self.STRATEGIES,
                         width=220, command=on_strategy_change).pack(side="left")
 
         # show each contact in the group for reference
@@ -3422,7 +3843,7 @@ class MergeReviewDialog(ctk.CTkToplevel):
             if var is None:
                 var = tk.StringVar(value=options[0])
                 state["manual_vars"][key] = var
-            cb = ctk.CTkComboBox(row, variable=var, values=options, width=380,
+            cb = ScrollableComboBox(row, variable=var, values=options, width=380,
                                  command=lambda _v: on_change())
             cb.pack(side="left", padx=(6,0))
 
@@ -3530,7 +3951,7 @@ def _lbl(parent, text, row):
         row=row, column=0, sticky="w", padx=14, pady=8)
 
 def _combo(parent, var, row, cmd=None, w=300):
-    cb = ctk.CTkComboBox(parent, variable=var, values=[], width=w, command=cmd)
+    cb = ScrollableComboBox(parent, variable=var, values=[], width=w, command=cmd)
     cb.grid(row=row, column=1, sticky="w", padx=8, pady=8)
     return cb
 

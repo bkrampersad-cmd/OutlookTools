@@ -1,5 +1,3 @@
-**Software installer is available in the release section**
-
 # Beeran's Outlook Tools
 
 **Version 1.5** &nbsp;·&nbsp; Windows Desktop App &nbsp;·&nbsp; Built with Python + customtkinter
