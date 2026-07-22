@@ -1,4 +1,5 @@
-# BEERAN'S OUTLOOK MONITOR & TOOLS
+# BEERAN'S OUTLOOK TOOLS
+
 ## SOFTWARE LICENSE (FREE USE, NO MODIFICATION)
 
 Copyright (c) 2026 Beeran. All rights reserved.
@@ -82,16 +83,16 @@ any applicable open-source license for such components.
 The following third-party libraries are used in this Software and are
 distributed under their respective licenses:
 
-| Library | License | Notes |
-|---|---|---|
-| customtkinter | MIT | UI framework |
-| pywin32 | PSF | Outlook COM/MAPI access |
-| Pillow | MIT-CMU (HPND) | Image processing |
-| pytz | MIT | Timezone support |
-| plyer | MIT | System notifications |
-| pydub | MIT | Audio file processing |
-| numpy | BSD-3-Clause | Numerical processing |
-| **pystray** | **GNU LGPLv3** | **System tray icon** |
+| Library       | License        | Notes                   |
+| ------------- | -------------- | ----------------------- |
+| customtkinter | MIT            | UI framework            |
+| pywin32       | PSF            | Outlook COM/MAPI access |
+| Pillow        | MIT-CMU (HPND) | Image processing        |
+| pytz          | MIT            | Timezone support        |
+| plyer         | MIT            | System notifications    |
+| pydub         | MIT            | Audio file processing   |
+| numpy         | BSD-3-Clause   | Numerical processing    |
+| **pystray**   | **GNU LGPLv3** | **System tray icon**    |
 
 **pystray notice (LGPL §4(d)):** This Software uses pystray, which is
 licensed under the GNU Lesser General Public License v3 (LGPLv3).
@@ -113,5 +114,5 @@ such modification constitutes acceptance of the revised terms.
 
 ---
 
-**Beeran's Outlook Monitor & Tools**  
+**Beeran's Outlook Tools**  
 All rights reserved.
