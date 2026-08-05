@@ -1,264 +1,362 @@
-<div align="center">
-
-<img src="logo.png" alt="Beeran's Outlook Tools" width="120"/>
-
 # Beeran's Outlook Tools
 
-**v2.0** &nbsp;·&nbsp; Windows Desktop App
+**Version 2.1** &nbsp;·&nbsp; Windows Desktop App &nbsp;·&nbsp; Built with Python + customtkinter
 
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
-[![Outlook](https://img.shields.io/badge/requires-Microsoft%20Outlook-0072C6?style=flat-square&logo=microsoft-outlook)](https://www.microsoft.com/microsoft-365)
-[![License](https://img.shields.io/badge/license-Proprietary%20%E2%80%94%20Free%20to%20Use-navy?style=flat-square)](#-license)
-[![Version](https://img.shields.io/badge/version-2.0-brightgreen?style=flat-square)](#-whats-new-in-v20)
-
-*A powerful desktop companion for Microsoft Outlook — no cloud accounts, no subscriptions, no browser. Just a clean Windows app that talks directly to Outlook and gets things done.*
-
-[**⬇️ Download v2.0**](#-download--install) &nbsp;·&nbsp; [**✨ Features**](#-features) &nbsp;·&nbsp; [**🚀 Getting Started**](#-getting-started)
-
-</div>
+> *Direct, powerful control over your Microsoft Outlook inbox — no cloud accounts, no Azure registrations, no subscriptions. Just a clean Windows app that talks straight to Outlook and gets things done.*
 
 ---
 
-## 📸 Screenshots
+## ✨ Features at a Glance
 
-<table>
-<tr>
-<td align="center" width="50%">
-<img src="screenshots/01_welcome.png" alt="Welcome Screen" width="100%"/>
-<br/><sub><b>Welcome Screen</b> — grouped navigation with feature cards</sub>
-</td>
-<td align="center" width="50%">
-<img src="screenshots/02_inbox_rules.png" alt="Native Outlook Rules Manager" width="100%"/>
-<br/><sub><b>Inbox → Rules</b> — native Outlook rules manager</sub>
-</td>
-</tr>
-<tr>
-<td align="center" width="50%">
-<img src="screenshots/03_cleanup_email.png" alt="Bulk Email Detector" width="100%"/>
-<br/><sub><b>Cleanup Email → Bulk Email</b> — auto-detect newsletters and bulk mail</sub>
-</td>
-<td align="center" width="50%">
-<img src="screenshots/04_contacts_export.png" alt="Contact Export Import" width="100%"/>
-<br/><sub><b>Contacts → Export / Import</b> — CSV export with selectable fields</sub>
-</td>
-</tr>
-<tr>
-<td align="center" width="50%">
-<img src="screenshots/05_calendar.png" alt="Duplicate Calendar Detector" width="100%"/>
-<br/><sub><b>Calendar → Duplicate Calendar</b> — find and remove duplicate meetings</sub>
-</td>
-<td align="center" width="50%">
-<img src="screenshots/06_utilities.png" alt="Attachment Extractor" width="100%"/>
-<br/><sub><b>Utilities → Attachments</b> — extract attachments from any folder</sub>
-</td>
-</tr>
-</table>
+The app uses a **grouped sidebar navigation** with 6 sections, each containing related tools in folder-style sub-tabs. Settings, About, and Diagnostics are always pinned at the bottom, with a live Outlook connection indicator beneath them.
+
+| Group | Sub-tabs | What it does |
+|-------|----------|-------------|
+| 📬 **Inbox** | Monitor · Follow-up Tracker · Bulk Archive · Account Archive · Search · Rules | Watch folders, track unanswered mail, clean up old emails, archive an entire account to .pst, search, manage native Outlook rules |
+| 📨 **Compose** | Templates · Out of Office | Save reusable email templates; set OOF auto-replies with internal + external messages |
+| 🧹 **Cleanup Email** | Bulk Email · Duplicate Emails · Email Size | Detect newsletters, remove duplicate messages, analyse mailbox size |
+| 👤 **Contacts** | Duplicate Contacts · Export / Import | Find and merge duplicate contacts; export or import via CSV |
+| 📅 **Calendar** | Daily Digest · Duplicate Calendar · Calendar Backup · Meeting Inspector | Unread mail summary; detect and remove duplicate meetings; back up a calendar to .ics/.pst; diagnose meetings that keep reappearing |
+| 📎 **Utilities** | Attachments · Schedule · Folder Statistics · Log | Extract attachments, schedule automation, view folder stats, review event log |
+| ⚙️ **Settings** | — | Theme and close-behaviour preferences |
+| 📘 **About** | — | Version info, third-party attributions, and proprietary license |
+| 🩺 **Diagnostics** | — | Per-account health check, one-click repair for server-backed accounts, and backup-file mount |
+
+The app opens on a **Welcome screen** — pick a group on the left to get started.
 
 ---
 
-## 🌟 Why Beeran's Outlook Tools?
+## 🖥️ Requirements
 
-Most Outlook productivity tools require you to sign in to a cloud service, hand over your credentials, or install an Outlook add-in that slows everything down. This app does none of that.
+- **Windows 10 or 11**
+- **Microsoft Outlook** installed and open on the same machine
+- **Python 3.9+** *(only needed to build from source — Python 3.12 is the most stable target)*
+- **Internet access** *(only needed for Bulk Email's Auto-Unsubscribe feature)*
 
-It connects **directly to your local Outlook installation** using the same MAPI/COM interface that Windows itself uses — no internet required for core features, no data leaves your machine, and it works with any account Outlook supports (Exchange, Microsoft 365, IMAP, POP3).
-
----
-
-## ✨ Features
-
-### 📬 Inbox Management
-| Feature | Description |
-|---------|-------------|
-| **Folder Monitor** | Watch up to 4 folders simultaneously — get sound + popup alerts if any go quiet for too long |
-| **Follow-up Tracker** | Scans Sent Items for emails that never got a reply, after a configurable number of days |
-| **Bulk Archive** | Move or delete batches of old mail in one action — great for Inbox Zero |
-| **Email Search** | Full-text search across any folder or entire account |
-| **Native Outlook Rules** | Import, edit, create, and save rules directly back to Outlook — rules run even when this app is closed |
-
-### 📨 Compose Tools
-| Feature | Description |
-|---------|-------------|
-| **Email Templates** | Save and reuse email templates with one click — includes Outlook signature picker |
-| **Out of Office Manager** | Configure internal + external auto-replies, start/end dates, and audience — sent directly to Outlook |
-
-### 🧹 Cleanup
-| Feature | Description |
-|---------|-------------|
-| **Bulk Email Detector** | Auto-detect newsletters and marketing mail, or search manually — move, flag, or delete in bulk |
-| **Auto-Unsubscribe** | One-click unsubscribe per sender using the email's built-in unsubscribe mechanism |
-| **Duplicate Email Detector** | Find and remove duplicate messages with configurable match criteria |
-| **Email Size Analyzer** | See which emails are consuming the most mailbox space |
-
-### 👤 Contact Tools
-| Feature | Description |
-|---------|-------------|
-| **Duplicate Contact Detector** | Finds same-name/different-email and same-email/different-name duplicates |
-| **Smart Merge** | Field-by-field merge review with live preview before anything changes |
-| **Export / Import** | Export contacts to CSV with selectable fields; import from CSV |
-
-### 📅 Calendar
-| Feature | Description |
-|---------|-------------|
-| **Daily Digest** | Unread counts, top senders, and subject samples across chosen folders — on demand or as a daily popup |
-| **Duplicate Calendar Detector** | Find duplicate meeting occurrences or recurring series masters and clean them up safely |
-
-### 📎 Utilities
-| Feature | Description |
-|---------|-------------|
-| **Attachment Extractor** | Extract attachments from any folder to a local path or another Outlook folder |
-| **Scheduled Extraction** | Run attachment extraction automatically on an interval or at a set time each day |
-| **Folder Statistics** | At-a-glance stats for any folder — total emails, unread rate, size, and date range |
-| **Export to PDF** | Export individual emails or entire folders to PDF, with date and text filters |
-| **Event Log** | Timestamped record of every action, exportable as `.txt` or `.csv` |
-
-### ✒️ Compose — Signatures
-| Feature | Description |
-|---------|-------------|
-| **Signature Manager** | View, edit, and save Outlook email signatures with a visual editor, image support, and live preview |
-
-### 🔔 Alert Sounds
-**20 built-in alert sounds** plus 6 Windows system sounds and support for any custom `.wav` file.
+> No Azure registration. No API keys. No browser login. Connects directly to Outlook via MAPI/COM.
 
 ---
 
-## ⬇️ Download & Install
+## 🔨 Building the Executable
 
-Head to the [**Releases page**](../../releases) and download the latest **`BeeransOutlookTools_v2.0_Setup.exe`**.
+1. Install **Python 3.9+** from [python.org](https://www.python.org) — tick *"Add to PATH"* during setup
+2. Place **`icon.ico`**, **`logo.png`**, and the **`sounds\`** folder next to `monitor.py`
+3. Double-click **`build.bat`**
+4. The finished app lands at:
 
-Run the installer — it will:
-- Install the app to **`C:\Beerans Outlook Tools v2.0\`**
-- Create a **desktop shortcut** for quick access
-- Add an entry to **Programs and Features** for clean uninstallation
-- Place a copy of this README in the installation folder for reference
+```
+dist\Beeran's Outlook Tools\Beeran's Outlook Tools.exe
+```
 
-> No admin rights are required to run the app after installation.
+The exe/folder name is intentionally version-less, so the install path (`C:\Beerans Outlook Tools\`) stays the same across every future version — only the app's internal version number (shown in the window title, sidebar, and About page) changes.
+
+This is a **folder-based build** — the `.exe` sits next to a `_internal\` folder. Always copy the whole folder together.
 
 ---
 
 ## 🚀 Getting Started
 
-1. **Open Microsoft Outlook** first — the app connects to your running Outlook instance
-2. **Launch** Beeran's Outlook Tools from your desktop shortcut
-3. The app **auto-discovers** all your accounts and folders — no configuration needed
-4. Click any section in the left sidebar to get started
-5. All settings **save automatically** as you work
+1. Open **Microsoft Outlook** first
+2. Run `Beeran's Outlook Tools.exe`
+3. The app auto-discovers all your accounts and folders
+4. Click any group in the left sidebar to get started
+5. Settings save automatically as you work
 
 ---
 
-## 🖥️ System Requirements
+## 📬 Inbox
 
-| Requirement | Details |
-|-------------|---------|
-| **Operating System** | Windows 10 or Windows 11 |
-| **Microsoft Outlook** | Must be installed and open on the same machine |
-| **Account Type** | Any account Outlook supports — Exchange, Microsoft 365, IMAP, POP3 |
-| **Internet** | Only required for the Bulk Email Auto-Unsubscribe feature |
+### Monitor
+Watch up to **4 Outlook folders at once**, each with its own alert settings.
 
-> No Python installation required. No cloud sign-in. No Outlook add-ins.
+| Setting | Description |
+|---------|-------------|
+| Account / Folder | Which mailbox and folder to watch |
+| Alert if no mail for | Minutes of silence before an alert fires |
+| Alert sound | 20 built-in sounds (see list below), a Windows system sound, or a custom `.wav` |
+| Repeat alert | Repeat the sound + popup every 1–5 minutes until mail arrives |
+| ▶ Test | Preview the selected sound immediately |
+
+**Available sounds:** Chime, Doorbell, Fanfare, Urgent, Modern Chimes, Tech Alert, Village Bell, Clean Tone, Tornado Siren, Ringtone, Cinematic Blast, Siren Alert, Alert, Alarm, Sharp Alert, Notification, Sci-Fi Alert, System Alert, Progressive Tone, Ping — plus 6 Windows system sounds.
+
+### Follow-up Tracker
+Scans **Sent Items** for messages with no reply after a configurable number of days. Matches replies by conversation topic. Results are exportable to `.csv`. Optional scheduled scans on an interval or daily at a set time.
+
+> Best-effort matching — unusual threading across mail clients can occasionally produce a false positive.
+
+### Bulk Archive
+Move or delete many emails at once. Configure an account, source folder, destination folder, age threshold (days), and whether to include unread mail. A count preview appears before any action is taken.
+
+### Account Archive
+Moves old items out of an **entire account** into a separate `.pst` archive file — frees up mailbox space, similar to Outlook's built-in Archive. Unlike Bulk Archive (one folder, email only), this covers any combination of Email, Calendar, Contacts, and Notes in a single pass, with one age threshold. Choose to create a new archive file or keep adding to an existing one. A per-type count preview and confirmation window appear before anything is moved — active recurring calendar series are always skipped, even if old.
+
+### Search
+Full-text search (subject, sender, body) across one folder or an entire account, with timestamped results.
+
+### Rules
+**Native Outlook Rules Manager** — import, edit, create, and push rules directly back to Outlook. Rules saved here run in Outlook even when this app is closed.
+
+**Workflow:**
+1. Select an account and click **Get Rules from Outlook**
+2. Toggle rules on/off, delete unwanted rules, or add/edit rules
+3. Click **Send to Outlook** — all changes are written back and saved
+
+When saving fails because a rule has invalid conditions or a missing target folder, the app identifies exactly which rules are problematic, shows you the reason for each, and lets you remove the bad ones and retry automatically.
+
+> Send to Outlook pushes the **entire remaining rule list** back to Outlook — you do not need to select rules first.
 
 ---
 
-## 📖 Feature Highlights
+## 📨 Compose
 
-### 🔒 Native Outlook Rules — No App Required to Stay Open
+### Templates
+Save frequently-used email templates (name, subject, body). Open any template with one click to pre-fill a new email in Outlook. Insert an Outlook signature directly from the app.
 
-Unlike a rules engine that requires this app to be running, the v2.0 Rules manager writes rules **directly to Outlook**. Once saved, Outlook handles them natively — even when you're away from your desk and this app is closed.
+### Out of Office
+Set your auto-reply messages for internal and external senders, with optional start/end dates and external audience control (all senders or contacts only). Settings are sent directly to Outlook — **the app does not need to stay open** for OOF to work. Requires an Exchange or Microsoft 365 account.
 
-If Outlook detects that one of your rules has an invalid condition (e.g. a target folder that was deleted), the app identifies the specific problem rules, tells you exactly why each one is invalid, and lets you remove them and retry — all without leaving the app.
+---
 
-### 🤝 Smart Duplicate Contact Merge
+## 🧹 Cleanup Email
 
-The merge review dialog lets you resolve each duplicate group individually:
-- **Most recently modified** — newest contact wins; gaps filled from others
-- **Most complete** — whichever contact has the most filled-in fields wins
-- **Manual** — pick the winning value for each field from a dropdown, with a live preview before confirming
+### Bulk Email
+Two detection modes:
 
-Nothing is changed until you explicitly confirm.
+- **Auto-detect** — flags a sender as bulk if seen at least N times (configurable), or if their mail carries a `List-Unsubscribe` header. External senders only by default.
+- **Manual search** — From and/or Subject contains text you specify.
 
-### 📨 Out of Office — Set It and Forget It
+**Action on matches:** Log only / Flag / Move to folder / Delete.
 
-Configure separate messages for internal and external senders, with optional start/end dates. Once you click **Save & Apply**, the settings go directly to Outlook (and to your Exchange/M365 server if applicable). **This app does not need to stay open** for auto-replies to work.
+**Excluded Domains** — domains that are never flagged as bulk. Add via text entry or one-click from scan results. Saved immediately.
 
-### 🌀 Folder Monitor with Smart Alerts
+**🚫 Auto-Unsubscribe** — acts once per sender. Uses the one-click method where supported; for email-based unsubscribes, opens a pre-filled Outlook draft for you to review before sending.
 
-Each monitored folder has independent settings — different alert thresholds, different sounds, different repeat intervals. Choose from 20 built-in sounds or load your own `.wav`. Alerts can repeat every 1–5 minutes until new mail arrives.
+### Duplicate Emails
+Finds duplicate messages using configurable match criteria:
+- Subject + Sender + Date
+- Subject + Sender
+- Custom combination of Subject / Sender / Date / Body
+
+Action on matches: Log only / Flag / Delete / Export. Optional scheduled scans.
+
+### Email Size
+Analyses a folder and lists the largest emails by size, helping you identify what's consuming the most mailbox space.
+
+---
+
+## 👤 Contacts
+
+### Duplicate Contacts
+Finds duplicates two ways: same name with different emails, and same email with different names.
+
+**Delete** and **Merge** both open a review window first:
+- **Delete review** — every group listed with checkboxes (pre-checked for duplicates, keeper unchecked); confirm before anything changes.
+- **Merge review** — choose a strategy per group: *Most recently modified*, *Most complete*, or *Manual* (pick field-by-field from a dropdown). Live preview before confirming.
+
+### Export / Import
+Export contacts to a `.csv` file with selectable fields (Select All / Deselect All available). Import contacts from a `.csv` into any Contacts folder.
+
+---
+
+## 📅 Calendar
+
+### Daily Digest
+Pick an account and folders to get unread counts, top senders, and sample subjects for each. Run on demand or enable a daily popup at a set time.
+
+### Duplicate Calendar
+Detects duplicate meetings in two modes:
+
+- **Individual occurrences** — finds duplicate instances within a configurable date range
+- **Recurring series** — compares entire series masters; choose whether to keep the older or newer master
+
+Requires same subject, organiser, and time to count as a duplicate. Opens a review dialog before any deletion.
+
+### Calendar Backup
+Exports a calendar to `.ics` and/or a standalone `.pst` file — a non-destructive copy; nothing is removed from the original. Works on your own calendar or any shared calendar already visible in your Outlook profile. Choose "entire calendar" (exports each recurring series once, pattern intact) or a date range (expands recurring meetings into the individual occurrences that fall inside the window).
+
+### Meeting Inspector
+Diagnoses why a meeting keeps reappearing after you delete it. Search for it by subject, then inspect it: recurrence pattern and exceptions, a check for duplicate copies sharing the same identity elsewhere (the calendar and Deleted Items), whether the mailbox is in Cached Exchange Mode, and whether you're the organizer or an attendee. Offers only the actions that fit what it found — remove the series, remove the series plus any detected duplicates, decline, or cancel — behind a confirmation step.
+
+---
+
+## 📎 Utilities
+
+### Attachments
+Extract attachments from any Outlook folder to a local path or another Outlook folder. Optionally move processed emails after extraction. Attachments are saved into sub-folders named after each email's subject.
+
+### Schedule
+Run attachment extraction automatically on an interval and/or daily at a set time. Uses the same source/destination settings as the Attachments tab.
+
+### Folder Statistics
+At-a-glance summary of any folder: total emails, unread count and percentage, total size in MB, oldest and newest email dates, and date span.
+
+### Log
+Live, timestamped record of every event — monitor checks, alerts, extractions, rule actions, scans, and errors.
+
+| Button | Action |
+|--------|--------|
+| Export .txt | Plain text copy of the log |
+| Export .csv | Two-column (timestamp, message) file |
+| Clear | Wipes the current session log |
+
+---
+
+## 🔔 System Tray
+
+Closing the main window asks what to do (configurable in Settings):
+
+| Choice | Result |
+|--------|--------|
+| Minimize to Tray | Window hides; monitoring and scheduling keep running |
+| Exit | App shuts down completely |
+
+Double-click the tray icon or click **Show** to restore; **Quit** to exit fully.
+
+---
+
+## 🔧 Settings
+
+| Setting | Options |
+|---------|---------|
+| Appearance | Dark · Light *(default)* · System |
+| On window close | ask · tray · exit |
+
+---
+
+## 📘 About
+
+Version info, full feature list, third-party library attributions (including pystray LGPL notice), and the complete proprietary license text.
+
+---
+
+## 🩺 Diagnostics
+
+*New in v2.1.* The connection light below only proves Outlook itself is running — it says nothing about whether one specific account's data is actually loading. A corrupted local cache (`.ost`) or a stuck sync can leave an account showing "connected" while its folders never populate. Diagnostics checks every account directly.
+
+Click **Run Diagnostic** and it checks each account's ability to actually enumerate its own folders (an 8-second timeout per account, so one stuck account can't freeze the check), plus its Cached Exchange Mode status and local data-file health. Each account is marked **OK**, **Warning**, or **Failed**, with the specific reason and — for local data files — the exact file path.
+
+For any account flagged:
+
+| Action | What it does |
+|--------|-------------|
+| 🛠 Close Outlook & Repair | Offered only for server-backed accounts (Exchange cached mode, or an IMAP `.ost`) — closes Outlook, renames the local cache so Outlook rebuilds it fresh from the server, then reopens Outlook automatically. Closing and renaming takes up to ~30 seconds; the resync afterward can take much longer on a large mailbox. **Not offered for a plain `.pst`**, since that file is the only copy of that data — renaming it would be real data loss. |
+| 📂 Point to a backup file… | Browse to any `.pst` and mount it as a stand-in Outlook data source, so you have working data while the live account gets fixed. Choose each time whether the mount stays permanently attached or is removed automatically when the app closes. |
+
+If Close Outlook & Repair can't finish (Outlook won't close, or the file stays locked), a popup walks through the manual fallbacks: confirm Outlook is fully closed and retry, run Microsoft's Inbox Repair Tool (`SCANPST.EXE`) on the file, or remove and re-add the account in Outlook's Account Settings.
+
+Diagnostics can't repair server-side Microsoft 365 issues — that still needs Outlook closed, the Inbox Repair Tool, or your IT admin. What it adds is certainty about which account is broken, exactly which file is involved, and a way to keep working from a backup in the meantime.
+
+---
+
+## 🟢 Outlook Connection Status
+
+*New in v2.1.* A small dot and status label sit at the very bottom of the sidebar, below Settings, About, and Diagnostics, showing whether the app is currently talking to Outlook:
+
+| Indicator | Meaning |
+|-----------|---------|
+| 🟢 "Connected to Outlook" | Outlook is running and reachable; every tool is available. |
+| 🔴 "Outlook not running" | Outlook isn't currently running, or has closed — features that need Outlook won't work until it's open again. |
+
+The app checks automatically every few seconds — no restart needed either way. If Outlook isn't running at startup, or closes while the app is open, the dot turns red, a note is written to the Log tab, and (if Outlook closes mid-session) a Windows notification lets you know. As soon as Outlook is running again, the dot turns green on its own and the app auto-refreshes its accounts and folders.
+
+---
+
+## 🔒 Security
+
+The compiled executable includes tamper/decompilation detection. If the app detects it is being run outside its compiled environment, a warning dialog displays the machine name, IP address, and timestamp before terminating. Attempting to reverse-engineer or decompile this software is prohibited under the license agreement.
+
+---
+
+## 📁 Files
+
+| File | Purpose |
+|------|---------| 
+| `monitor.py` | Full application source code |
+| `requirements.txt` | Python dependencies |
+| `outlook_tools.spec` | PyInstaller build configuration (onedir mode) |
+| `build.bat` | One-click Windows build script (3 steps: deps → pywin32 → build) |
+| `sounds\` | 20 bundled alert `.wav` files — must be present before building |
+| `icon.ico` | App/exe icon (multi-resolution) |
+| `logo.png` | Sidebar and Welcome-screen logo (transparent background) |
+| `config.json` | Auto-created; stores your settings *(safe to delete to reset)* |
+| `LICENSE.md` | Proprietary license — free to use, no modification or redistribution |
+| `generate_manual.py` | Re-runnable source for `User Manual.pdf` — the canonical way to update the manual |
+| `manual_svg\` | Vector diagrams embedded in `User Manual.pdf` (nav map, archive/backup/inspector flows) |
+| `User Manual.pdf` | Full end-user manual, generated by `generate_manual.py` |
 
 ---
 
 ## 🛠️ Troubleshooting
 
 **"Cannot connect to Outlook"**
-Make sure Outlook is open before launching this app. If Outlook just started, wait a few seconds and try again.
+Open Outlook before launching this app. If Outlook just opened, wait a few seconds and try again.
 
-**Folders not showing in dropdowns**
-Check the **Log** tab — any connection errors appear there with details.
+**Folders not populating in the dropdowns**
+Check the Log tab — any connection errors appear there with details.
+
+**pywin32 errors during build**
+`build.bat` runs the post-install step automatically. If issues persist, run manually:
+```
+python Scripts\pywin32_postinstall.py -install
+```
 
 **Tray icon not appearing**
-Look for it in the hidden icons overflow area (the `^` arrow in the system tray).
+Ensure Pillow and pystray are installed:
+```
+pip install Pillow pystray
+```
 
 **Out of Office not working**
-OOF requires an Exchange or Microsoft 365 account — IMAP/POP3 accounts don't support it via Outlook COM. The OOF page shows a warning if your account type isn't compatible.
+OOF requires an Exchange or Microsoft 365 account. IMAP/POP3 accounts do not support Out of Office via Outlook COM. The app shows a warning on the OOF page if your account type is not compatible.
 
-**Rules save fails with an "invalid conditions" error**
-One or more of your existing rules may point to a folder that was deleted. The app will identify those rules, explain the reason for each, and offer to remove them automatically so the save can proceed.
+**Rules "invalid actions or conditions" error on save**
+One or more of your existing Outlook rules may have a missing target folder or invalid condition. The app will identify the specific rules and offer to remove them automatically so the save can proceed.
 
 **Bulk Email auto-detect not flagging anything**
-On personal accounts (Gmail, Outlook.com), the app may not detect your "own domain" automatically. Frequency-based and List-Unsubscribe detection still work. Check your **Excluded Domains** list if expected senders aren't appearing.
+On personal accounts, the app may not detect your "own domain" automatically. Check the Log tab for a note. Frequency-based and List-Unsubscribe detection still work — double-check your Excluded Domains list isn't covering senders you expected to see.
+
+**Auto-Unsubscribe not working for a sender**
+Some senders only support unsubscribing by email reply. The app opens a pre-filled Outlook draft rather than failing silently. Check the results list for a `[unsubscribe via email]` tag.
+
+**A meeting keeps coming back after I delete it**
+Use the Meeting Inspector (Calendar group) instead of deleting it again — it will tell you whether this is a duplicate copy, a cached-mode resync, or an attendee/organizer mismatch, and offer the action that actually fixes it.
+
+**Account Archive says an account isn't found**
+The account name must match exactly what Outlook shows for that store. Re-open the page to refresh the account dropdown if you've recently added or removed an account in Outlook.
+
+**The dot below About is red**
+The app can't currently reach Outlook — usually because Outlook isn't open, or just closed. Open (or reopen) Outlook and wait a few seconds; the dot turns green and the app reconnects automatically, with no restart needed.
+
+**The dot is green, but one account's folders won't populate**
+That green light only confirms Outlook itself is running — it doesn't check any individual account. Open Diagnostics (bottom of the sidebar) and click Run Diagnostic; it will identify the broken account, explain the likely cause (usually a corrupted `.ost` or a stuck sync), and point you at the exact file and fix. You can also mount a backup `.pst` from there to keep working meanwhile.
+
+**Python 3.14 compatibility**
+Python 3.12 is the most stable build target. Very new Python releases may have package compatibility gaps.
 
 ---
 
-## 🆕 What's New in v2.0
+## 📧 Suggestions & Feedback
 
-- **🗂️ Grouped navigation** — 6 logical sections with folder-style sub-tabs replace the flat tab list
-- **📨 Compose tools** — Email Templates and Out of Office Manager
-- **⚡ Native Outlook Rules** — rules now run in Outlook 24/7, no app required
-- **🗃️ Bulk Archive** — move or delete old mail in bulk
-- **📊 Folder Statistics** — unread rate, size, and date range for any folder
-- **📅 Duplicate Calendar Detector** — find and clean up duplicate meetings
-- **👤 Contact Export / Import** — CSV round-trip with selectable fields
-- **📧 Email Size Analyzer** — identify mailbox space consumers
-- **🔔 20 alert sounds** — up from 4; all trimmed and normalised
-- **✒️ Signature Manager** — WYSIWYG editor with image support, font detection, and paste-from-HTML
-- **📄 Export to PDF** — export emails or folders to PDF with date range and text filters
-- **🎨 Refreshed UI** — folder-style tab buttons, larger fonts, navy accent divider
+Use the **About** tab in the app to send a suggestion, or email:
 
-### Full Version History
+**BeeransTools@outlook.com**
+
+---
+
+## 🏷️ Version History
 
 | Version | Highlights |
 |---------|------------|
-| **2.0** | Native Rules · Templates · OOF · Bulk Archive · Email Size · Folder Stats · Contact Export/Import · Dup. Calendar · Signature Manager · Export to PDF · New UI · 20 sounds · Tamper detection |
-| **1.5** | Follow-up Tracker · Daily Digest · Dup. Emails · Dup. Contacts (with merge) · Bulk Email + auto-unsubscribe · Welcome screen |
-| **1.4** | 4 built-in alert sounds · Per-folder repeat alerts |
-| **1.3** | Multi-folder monitor · Per-folder sounds · About page · Light mode |
-| **1.2** | System tray · Scheduled extraction · Rules engine · Search · Log export · Themes |
-| **1.0** | Inbox monitor · Attachment extractor · Event log · Windows notifications |
+| **2.1** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics (per-account health check, one-click repair for server-backed accounts, backup-file mount) · exe/install folder name made version-less so future updates don't move the install path |
+| **2.0** | Native Outlook Rules Manager · Email Templates · Out of Office Manager · Bulk Archive · Email Size Analyzer · Folder Statistics · Contact Export/Import · Duplicate Calendar Detector · Grouped navigation with folder-style sub-tabs · 20 built-in alert sounds · Tamper detection · Proprietary license · Third-party LGPL compliance |
+| **1.5** | Follow-up Tracker · Daily Digest · Duplicate Email Detector · Duplicate Contact Detector (Delete/Merge review dialogs) · Bulk Email Detector with auto-unsubscribe and domain exclusions · Welcome landing page · Custom icon/logo · onedir build |
+| **1.4** | 4 built-in musical alert sounds · Per-folder repeat alerts |
+| **1.3** | Multi-folder monitor (up to 4) · Per-folder custom sounds · About page · Light mode default |
+| **1.2** | System tray · Scheduled extraction · Email rules engine · Full-text search · Log export · Dark/light themes |
+| **1.0** | Inbox monitor · Attachment extractor · In-app log · Windows notifications |
 
 ---
 
-## 📜 License
+*Beeran's Outlook Tools &nbsp;·&nbsp; © 2026 Beeran &nbsp;·&nbsp; All rights reserved*
 
-**Proprietary — Free to Use, No Modification**
-
-© 2026 Beeran. All rights reserved.
-
-You may install and use this software on any number of devices, free of charge, for personal or business purposes. You may not modify, reverse-engineer, redistribute, or use it to build a competing product. See `LICENSE.md` for the full license text.
-
-This software uses open-source components including pystray (LGPLv3), customtkinter (MIT), pywin32 (PSF), Pillow (MIT), and others. See the **About** tab in the app for full third-party attributions.
-
----
-
-## 💬 Feedback & Suggestions
-
-Found a bug or have a feature idea? Use the **About** tab in the app to send a suggestion directly, or email:
-
-📧 **BeeransTools@outlook.com**
-
----
-
-<div align="center">
-
-*Built with Python · customtkinter · pywin32 · Pillow · pydub*
-
-*© 2026 Beeran · All rights reserved*
-
-</div>
+**License:** Proprietary — free to use, no modification or redistribution. See `LICENSE.md` or the About tab in the app for the full license text.

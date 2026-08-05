@@ -1,7 +1,8 @@
 customtkinter>=5.2.2
 pywin32>=312
-plyer>=2.1.0
 pytz>=2024.1
 pystray>=0.19.5
 Pillow>=10.4.0
 pyinstaller>=6.0.0
+tkinterweb>=3.24.0
+reportlab>=4.0.0
