@@ -16,7 +16,7 @@ The app uses a **grouped sidebar navigation** with 6 sections, each containing r
 | 📨 **Compose** | Templates · Out of Office | Save reusable email templates; set OOF auto-replies with internal + external messages |
 | 🧹 **Cleanup Email** | Bulk Email · Duplicate Emails · Email Size | Detect newsletters, remove duplicate messages, analyse mailbox size |
 | 👤 **Contacts** | Duplicate Contacts · Export / Import | Find and merge duplicate contacts; export or import via CSV |
-| 📅 **Calendar** | Daily Digest · Duplicate Calendar · Calendar Backup · Meeting Inspector | Unread mail summary; detect and remove duplicate meetings; back up a calendar to .ics/.pst; diagnose meetings that keep reappearing |
+| 📅 **Calendar** | Daily Digest · Duplicate Calendar · Calendar Backup · Meeting Inspector · Meeting Organizer Recovery | Unread mail summary; detect and remove duplicate meetings; back up a calendar to .ics/.pst; diagnose meetings that keep reappearing; recreate meetings left showing a stale organizer |
 | 📎 **Utilities** | Attachments · Schedule · Folder Statistics · Log | Extract attachments, schedule automation, view folder stats, review event log |
 | ⚙️ **Settings** | — | Theme and close-behaviour preferences |
 | 📘 **About** | — | Version info, third-party attributions, and proprietary license |
@@ -177,6 +177,26 @@ Exports a calendar to `.ics` and/or a standalone `.pst` file — a non-destructi
 ### Meeting Inspector
 Diagnoses why a meeting keeps reappearing after you delete it. Search for it by subject, then inspect it: recurrence pattern and exceptions, a check for duplicate copies sharing the same identity elsewhere (the calendar and Deleted Items), whether the mailbox is in Cached Exchange Mode, and whether you're the organizer or an attendee. Offers only the actions that fit what it found — remove the series, remove the series plus any detected duplicates, decline, or cancel — behind a confirmation step.
 
+### Meeting Organizer Recovery
+Its own tab, right next to Meeting Inspector — related but a separate diagnosis, with its own account/calendar-folder picker.
+
+*What it's for:* a narrow scenario — a mailbox was rebuilt, migrated, or had its calendar backed up and restored into a different account (e.g. after a corrupted profile), and meetings that mailbox used to organize are now stuck showing that old, no-longer-valid organizer identity. Outlook has no built-in way to reassign a meeting's organizer after the fact, so this feature works around it by recreating each affected meeting fresh under the current account instead of trying to edit the old one in place.
+
+Scans the selected account/folder for exactly that pattern — organizer-type items whose stored organizer doesn't match the current account, still upcoming — and lists each match with its subject, stale organizer, start time, series/Teams flags, and attendee count. Recreating builds a fresh appointment with the same subject/time/recurrence/attendees on the current account: non-Teams meetings send automatically, Teams meetings open as a draft to review and send yourself (a real Teams link needs the Teams add-in's own provisioning, which only fires from an open compose window). The stale local copy is always deleted; if the old account is still connected in the same Outlook profile, its live copy is cancelled first so attendees get a real cancellation instead of an orphaned duplicate.
+
+If the old account is gone (the usual case), have your Exchange/365 admin run this in Exchange Online PowerShell instead — cancelling meetings on behalf of another mailbox needs Exchange admin permissions this app deliberately never asks for. A button under the command in the app opens the Microsoft Learn reference directly:
+
+```powershell
+Connect-ExchangeOnline
+Remove-CalendarEvents -Identity "old.mailbox@yourdomain.com" -CancelOrganizedMeetings
+```
+
+- `-Identity` — the old/departing mailbox whose meetings need cancelling (email, alias, or display name)
+- `-CancelOrganizedMeetings` — sends a cancellation, on that mailbox's behalf, to every attendee for every meeting it organized. Without this switch the cmdlet only removes items from the mailbox's own calendar and notifies no one.
+- Optional: `-QueryStartDate` / `-QueryWindowInDays` to limit the sweep to a date range, and `-WhatIf` to preview what would be cancelled before actually sending anything.
+
+Full syntax and permission requirements: [Microsoft Learn — Remove-CalendarEvents](https://learn.microsoft.com/en-us/powershell/module/exchangepowershell/remove-calendarevents?view=exchange-ps).
+
 ---
 
 ## 📎 Utilities
@@ -220,7 +240,7 @@ Double-click the tray icon or click **Show** to restore; **Quit** to exit fully.
 |---------|---------|
 | Appearance | Dark · Light *(default)* · System |
 | On window close | ask · tray · exit |
-| Portable Version | Off *(default)* · On — deletes `config.json` when the app closes, so running it from a USB drive or shared folder on a different computer never inherits the previous computer's accounts, folders, or settings |
+| Portable Version | Off *(default)* · On — wipes every other saved setting when the app closes (the toggle itself stays on, so it only needs to be checked once), so running it from a USB drive or shared folder on a different computer never inherits the previous computer's accounts, folders, or settings |
 
 ---
 
@@ -345,6 +365,9 @@ Some senders only support unsubscribing by email reply. The app opens a pre-fill
 **A meeting keeps coming back after I delete it**
 Use the Meeting Inspector (Calendar group) instead of deleting it again — it will tell you whether this is a duplicate copy, a cached-mode resync, or an attendee/organizer mismatch, and offer the action that actually fixes it.
 
+**Organizer Recovery recreated a meeting, but attendees now see two copies**
+That happens when the old organizing account isn't connected in this same Outlook profile anymore, so the app has no way to send a cancellation from it. Ask your Exchange/365 admin to run `Remove-CalendarEvents` against the old mailbox — that cancels, on every attendee's calendar, everything it organized, clearing out the duplicate.
+
 **Account Archive says an account isn't found**
 The account name must match exactly what Outlook shows for that store. Re-open the page to refresh the account dropdown if you've recently added or removed an account in Outlook.
 
@@ -371,7 +394,7 @@ Use the **About** tab in the app to send a suggestion, or email:
 
 | Version | Highlights |
 |---------|------------|
-| **2.1** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics, now with Accounts / Add-ins / System sub-tabs — per-account health check with mailbox quota, Send/Receive activity, and cloud-sync data-file warnings, one-click repair for server-backed accounts, backup-file mount, COM add-in list with enable/disable, and system checks for duplicate Outlook processes and low disk space · Portable Version setting · exe/install folder name made version-less so future updates don't move the install path |
+| **2.1** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Meeting Organizer Recovery (its own tab; recreates meetings left showing a stale organizer after a calendar backup/restore into a different or rebuilt account) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics, now with Accounts / Add-ins / System sub-tabs — per-account health check with mailbox quota, Send/Receive activity, and cloud-sync data-file warnings, one-click repair for server-backed accounts, backup-file mount, COM add-in list with enable/disable, and system checks for duplicate Outlook processes and low disk space · Portable Version setting · build.bat now updates pip automatically before installing dependencies · exe/install folder name made version-less so future updates don't move the install path |
 | **2.0** | Native Outlook Rules Manager · Email Templates · Out of Office Manager · Bulk Archive · Email Size Analyzer · Folder Statistics · Contact Export/Import · Duplicate Calendar Detector · Grouped navigation with folder-style sub-tabs · 20 built-in alert sounds · Tamper detection · Proprietary license · Third-party LGPL compliance |
 | **1.5** | Follow-up Tracker · Daily Digest · Duplicate Email Detector · Duplicate Contact Detector (Delete/Merge review dialogs) · Bulk Email Detector with auto-unsubscribe and domain exclusions · Welcome landing page · Custom icon/logo · onedir build |
 | **1.4** | 4 built-in musical alert sounds · Per-folder repeat alerts |
