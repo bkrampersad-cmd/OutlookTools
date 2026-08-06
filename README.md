@@ -20,7 +20,7 @@ The app uses a **grouped sidebar navigation** with 6 sections, each containing r
 | 📎 **Utilities** | Attachments · Schedule · Folder Statistics · Log | Extract attachments, schedule automation, view folder stats, review event log |
 | ⚙️ **Settings** | — | Theme and close-behaviour preferences |
 | 📘 **About** | — | Version info, third-party attributions, and proprietary license |
-| 🩺 **Diagnostics** | — | Per-account health check, one-click repair for server-backed accounts, and backup-file mount |
+| 🩺 **Diagnostics** | Accounts · Add-ins · System | Per-account health check (quota, sync activity, cloud-sync warnings), one-click repair for server-backed accounts, backup-file mount, add-in list with enable/disable, and system checks for duplicate processes and disk space |
 
 The app opens on a **Welcome screen** — pick a group on the left to get started.
 
@@ -220,6 +220,7 @@ Double-click the tray icon or click **Show** to restore; **Quit** to exit fully.
 |---------|---------|
 | Appearance | Dark · Light *(default)* · System |
 | On window close | ask · tray · exit |
+| Portable Version | Off *(default)* · On — deletes `config.json` when the app closes, so running it from a USB drive or shared folder on a different computer never inherits the previous computer's accounts, folders, or settings |
 
 ---
 
@@ -231,9 +232,17 @@ Version info, full feature list, third-party library attributions (including pys
 
 ## 🩺 Diagnostics
 
-*New in v2.1.* The connection light below only proves Outlook itself is running — it says nothing about whether one specific account's data is actually loading. A corrupted local cache (`.ost`) or a stuck sync can leave an account showing "connected" while its folders never populate. Diagnostics checks every account directly.
+*New in v2.1.* The connection light below only proves Outlook itself is running — it says nothing about whether one specific account's data is actually loading. A corrupted local cache (`.ost`) or a stuck sync can leave an account showing "connected" while its folders never populate. Diagnostics is split into three sub-tabs — **Accounts**, **Add-ins**, and **System** — each checking a different layer of what can go wrong.
 
-Click **Run Diagnostic** and it checks each account's ability to actually enumerate its own folders (an 8-second timeout per account, so one stuck account can't freeze the check), plus its Cached Exchange Mode status and local data-file health. Each account is marked **OK**, **Warning**, or **Failed**, with the specific reason and — for local data files — the exact file path.
+### Accounts
+
+Checks every account directly — the same set shown on every other page's account dropdown, including any shared mailboxes or public folders you've been given access to, not just your own accounts. Results are grouped under **Configured Accounts** and **Shared / Delegated Accounts** so it's clear at a glance which is which.
+
+Click **Run Diagnostic** and it checks each account's ability to actually enumerate its own folders (an 8-second timeout per account, so one stuck account can't freeze the check), plus its Cached Exchange Mode status and local data-file health. Each account is marked **OK**, **Warning**, or **Failed**, with the specific reason and — for local data files — the exact file path. Where available, each card also shows:
+
+- **Send/Receive Activity** — how long since each Send/Receive group last synced (shown as its own summary above the account cards, since groups don't always map one-to-one to a single account)
+- **Mailbox quota** — on Exchange/Microsoft 365 accounts, once usage is within 90% of the quota
+- **Cloud-sync location warning** — flags a data file living inside a OneDrive/Dropbox/Google Drive/iCloud-synced folder; Microsoft advises against this since the sync client can lock or partially write the file while Outlook has it open
 
 For any account flagged:
 
@@ -245,6 +254,21 @@ For any account flagged:
 If Close Outlook & Repair can't finish (Outlook won't close, or the file stays locked), a popup walks through the manual fallbacks: confirm Outlook is fully closed and retry, run Microsoft's Inbox Repair Tool (`SCANPST.EXE`) on the file, or remove and re-add the account in Outlook's Account Settings.
 
 Diagnostics can't repair server-side Microsoft 365 issues — that still needs Outlook closed, the Inbox Repair Tool, or your IT admin. What it adds is certainty about which account is broken, exactly which file is involved, and a way to keep working from a backup in the meantime.
+
+### Add-ins
+
+Lists every COM add-in registered in Outlook, whether it's currently loaded, and its startup setting (loads at startup, loads on demand, or disabled). A misbehaving add-in is a common cause of a slow, hanging, or oddly-behaving Outlook session even when every account above checks out fine.
+
+Toggling **Enable/Disable** unloads or reloads the add-in immediately in the running Outlook session and updates its startup setting in the registry, matching Outlook's own File > Options > Add-ins dialog. If a disabled add-in re-enables itself after a restart, an organization IT policy is likely re-enforcing it and it can't be controlled from here. A banner appears if Outlook has recently auto-disabled an add-in after it crashed.
+
+### System
+
+Two machine-level checks that commonly explain Outlook trouble which has nothing to do with any specific account:
+
+| Check | What it catches |
+|-------|-----------------|
+| Duplicate Outlook processes | More than one `OUTLOOK.EXE` running at once — a leftover process from a previous crash can lock data files and cause exactly the kind of "connected but broken" behavior Diagnostics exists to catch. |
+| Disk space | Free space on every drive that hosts an account's local data file — cache growth failures and corruption both become more likely as free space runs out. |
 
 ---
 
@@ -274,7 +298,7 @@ The compiled executable includes tamper/decompilation detection. If the app dete
 | `monitor.py` | Full application source code |
 | `requirements.txt` | Python dependencies |
 | `outlook_tools.spec` | PyInstaller build configuration (onedir mode) |
-| `build.bat` | One-click Windows build script (3 steps: deps → pywin32 → build) |
+| `build.bat` | One-click Windows build script (4 steps: update pip → deps → pywin32 → build) |
 | `sounds\` | 20 bundled alert `.wav` files — must be present before building |
 | `icon.ico` | App/exe icon (multi-resolution) |
 | `logo.png` | Sidebar and Welcome-screen logo (transparent background) |
@@ -347,7 +371,7 @@ Use the **About** tab in the app to send a suggestion, or email:
 
 | Version | Highlights |
 |---------|------------|
-| **2.1** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics (per-account health check, one-click repair for server-backed accounts, backup-file mount) · exe/install folder name made version-less so future updates don't move the install path |
+| **2.1** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics, now with Accounts / Add-ins / System sub-tabs — per-account health check with mailbox quota, Send/Receive activity, and cloud-sync data-file warnings, one-click repair for server-backed accounts, backup-file mount, COM add-in list with enable/disable, and system checks for duplicate Outlook processes and low disk space · Portable Version setting · exe/install folder name made version-less so future updates don't move the install path |
 | **2.0** | Native Outlook Rules Manager · Email Templates · Out of Office Manager · Bulk Archive · Email Size Analyzer · Folder Statistics · Contact Export/Import · Duplicate Calendar Detector · Grouped navigation with folder-style sub-tabs · 20 built-in alert sounds · Tamper detection · Proprietary license · Third-party LGPL compliance |
 | **1.5** | Follow-up Tracker · Daily Digest · Duplicate Email Detector · Duplicate Contact Detector (Delete/Merge review dialogs) · Bulk Email Detector with auto-unsubscribe and domain exclusions · Welcome landing page · Custom icon/logo · onedir build |
 | **1.4** | 4 built-in musical alert sounds · Per-folder repeat alerts |
