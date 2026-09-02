@@ -3,6 +3,8 @@
 **Version 2.2** &nbsp;·&nbsp; Windows Desktop App &nbsp;·&nbsp; Built with Python + customtkinter
 
 > *Direct, powerful control over your Microsoft Outlook inbox — no cloud accounts, no Azure registrations, no subscriptions. Just a clean Windows app that talks straight to Outlook and gets things done.*
+>
+> Grab a copy by clicking the Releases on the right.
 
 ---
 
