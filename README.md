@@ -1,6 +1,6 @@
 # Beeran's Outlook Tools
 
-**Version 2.2** &nbsp;·&nbsp; Windows Desktop App &nbsp;·&nbsp; Built with Python + customtkinter
+**Version 2.4** &nbsp;·&nbsp; Windows Desktop App &nbsp;·&nbsp; Built with Python + customtkinter
 
 > *Direct, powerful control over your Microsoft Outlook inbox — no cloud accounts, no Azure registrations, no subscriptions. Just a clean Windows app that talks straight to Outlook and gets things done.*
 >
@@ -258,7 +258,7 @@ Version info, full feature list, third-party library attributions (including pys
 
 ## 🩺 Diagnostics
 
-*New in v2.2.* The connection light below only proves Outlook itself is running — it says nothing about whether one specific account's data is actually loading. A corrupted local cache (`.ost`) or a stuck sync can leave an account showing "connected" while its folders never populate. Diagnostics is split into three sub-tabs — **Accounts**, **Add-ins**, and **System** — each checking a different layer of what can go wrong.
+*New in v2.4.* The connection light below only proves Outlook itself is running — it says nothing about whether one specific account's data is actually loading. A corrupted local cache (`.ost`) or a stuck sync can leave an account showing "connected" while its folders never populate. Diagnostics is split into three sub-tabs — **Accounts**, **Add-ins**, and **System** — each checking a different layer of what can go wrong.
 
 ### Accounts
 
@@ -300,7 +300,7 @@ Two machine-level checks that commonly explain Outlook trouble which has nothing
 
 ## 🟢 Outlook Connection Status
 
-*New in v2.2.* A small dot and status label sit at the very bottom of the sidebar, below Settings, About, and Diagnostics, showing whether the app is currently talking to Outlook:
+*New in v2.4.* A small dot and status label sit at the very bottom of the sidebar, below Settings, About, and Diagnostics, showing whether the app is currently talking to Outlook:
 
 | Indicator | Meaning |
 |-----------|---------|
@@ -400,7 +400,7 @@ Use the **About** tab in the app to send a suggestion, or email:
 
 | Version | Highlights |
 |---------|------------|
-| **2.2** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Meeting Organizer Recovery (its own tab; recreates meetings left showing a stale organizer after a calendar backup/restore into a different or rebuilt account; detection now resolves mailbox addresses instead of just comparing display names, catching same-name/rebuilt-mailbox cases; added Browse All Meetings, a manual list-and-select fallback with an optional organizer filter, for when the automatic scan finds nothing) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics, now with Accounts / Add-ins / System sub-tabs — per-account health check with mailbox quota, Send/Receive activity, and cloud-sync data-file warnings, one-click repair for server-backed accounts, backup-file mount, COM add-in list with enable/disable, and system checks for duplicate Outlook processes and low disk space · Portable Version setting · build.bat now updates pip automatically before installing dependencies · faster startup and shutdown (pages now build on first visit instead of all at once) · fixed a startup crash (and a similar one from scheduled background scans) introduced by that same speed-up, where the app could try to update a tab's contents before that tab had been opened yet · exe/install folder name made version-less so future updates don't move the install path |
+| **2.4** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Meeting Organizer Recovery (its own tab; recreates meetings left showing a stale organizer after a calendar backup/restore into a different or rebuilt account; detection now resolves mailbox addresses instead of just comparing display names, catching same-name/rebuilt-mailbox cases; added Browse All Meetings, a manual list-and-select fallback with an optional organizer filter, for when the automatic scan finds nothing) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics, now with Accounts / Add-ins / System sub-tabs — per-account health check with mailbox quota, Send/Receive activity, and cloud-sync data-file warnings, one-click repair for server-backed accounts, backup-file mount, COM add-in list with enable/disable, and system checks for duplicate Outlook processes and low disk space · Portable Version setting · build.bat now updates pip automatically before installing dependencies · faster startup and shutdown (pages now build on first visit instead of all at once) · fixed a startup crash (and a similar one from scheduled background scans) introduced by that same speed-up, where the app could try to update a tab's contents before that tab had been opened yet · exe/install folder name made version-less so future updates don't move the install path |
 | **2.0** | Native Outlook Rules Manager · Email Templates · Out of Office Manager · Bulk Archive · Email Size Analyzer · Folder Statistics · Contact Export/Import · Duplicate Calendar Detector · Grouped navigation with folder-style sub-tabs · 20 built-in alert sounds · Tamper detection · Proprietary license · Third-party LGPL compliance |
 | **1.5** | Follow-up Tracker · Daily Digest · Duplicate Email Detector · Duplicate Contact Detector (Delete/Merge review dialogs) · Bulk Email Detector with auto-unsubscribe and domain exclusions · Welcome landing page · Custom icon/logo · onedir build |
 | **1.4** | 4 built-in musical alert sounds · Per-folder repeat alerts |
