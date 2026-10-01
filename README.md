@@ -3,8 +3,6 @@
 **Version 2.4** &nbsp;·&nbsp; Windows Desktop App &nbsp;·&nbsp; Built with Python + customtkinter
 
 > *Direct, powerful control over your Microsoft Outlook inbox — no cloud accounts, no Azure registrations, no subscriptions. Just a clean Windows app that talks straight to Outlook and gets things done.*
->
-> 📥 **Download:** Grab the latest installer from the **[Releases](../../releases)** panel on the right.
 
 ---
 
@@ -20,11 +18,11 @@ The app uses a **grouped sidebar navigation** with 6 sections, each containing r
 | 👤 **Contacts** | Duplicate Contacts · Export / Import | Find and merge duplicate contacts; export or import via CSV |
 | 📅 **Calendar** | Daily Digest · Duplicate Calendar · Calendar Backup · Meeting Inspector · Meeting Organizer Recovery | Unread mail summary; detect and remove duplicate meetings; back up a calendar to .ics/.pst; diagnose meetings that keep reappearing; recreate meetings left showing a stale organizer |
 | 📎 **Utilities** | Attachments · Schedule · Folder Statistics · Log | Extract attachments, schedule automation, view folder stats, review event log |
-| ⚙️ **Settings** | — | Theme and close-behaviour preferences |
+| ⚙️ **Settings** | — | Theme, close-behaviour, Portable Version, and Run at Windows startup preferences |
 | 📘 **About** | — | Version info, third-party attributions, and proprietary license |
 | 🩺 **Diagnostics** | Accounts · Add-ins · System | Per-account health check (quota, sync activity, cloud-sync warnings), one-click repair for server-backed accounts, backup-file mount, add-in list with enable/disable, and system checks for duplicate processes and disk space |
 
-The app opens on a **Welcome screen** — pick a group on the left to get started.
+The app opens on a **Welcome screen** — pick a group on the left to get started. Right after opening, a status line briefly shows "Please wait while we fully connect to Microsoft Outlook…" while every tab is pre-built in the background and the live account/folder scan finishes, then switches to a "✔ Done" message — on later launches this is usually quick, since the previous scan is cached and reused while a fresh one catches up silently. A **🔄 Rescan / Refresh Connection** button on this screen forces a full re-scan of every connected account and folder on demand, with its own status message while it runs.
 
 ---
 
@@ -177,7 +175,7 @@ Requires same subject, organiser, and time to count as a duplicate. Opens a revi
 Exports a calendar to `.ics` and/or a standalone `.pst` file — a non-destructive copy; nothing is removed from the original. Works on your own calendar or any shared calendar already visible in your Outlook profile. Choose "entire calendar" (exports each recurring series once, pattern intact) or a date range (expands recurring meetings into the individual occurrences that fall inside the window).
 
 ### Meeting Inspector
-Diagnoses why a meeting keeps reappearing after you delete it. Search for it by subject, then inspect it: recurrence pattern and exceptions, a check for duplicate copies sharing the same identity elsewhere (the calendar and Deleted Items), whether the mailbox is in Cached Exchange Mode, and whether you're the organizer or an attendee. Offers only the actions that fit what it found — remove the series, remove the series plus any detected duplicates, decline, or cancel — behind a confirmation step.
+Diagnoses why a meeting keeps reappearing after you delete it. Find it by subject (optional — leave it blank to list every meeting in the folder), then inspect it: recurrence pattern and exceptions, a check for duplicate copies sharing the same identity elsewhere (the calendar and Deleted Items), whether the mailbox is in Cached Exchange Mode, and whether you're the organizer or an attendee. Offers only the actions that fit what it found — remove the series, remove the series plus any detected duplicates, decline, or cancel — behind a confirmation step.
 
 ### Meeting Organizer Recovery
 Its own tab, right next to Meeting Inspector — related but a separate diagnosis, with its own account/calendar-folder picker.
@@ -245,8 +243,22 @@ Double-click the tray icon or click **Show** to restore; **Quit** to exit fully.
 | Setting | Options |
 |---------|---------|
 | Appearance | Dark · Light *(default)* · System |
-| On window close | ask · tray · exit |
+| On window close | auto *(default)* · ask · tray · exit |
 | Portable Version | Off *(default)* · On — wipes every other saved setting when the app closes (the toggle itself stays on, so it only needs to be checked once), so running it from a USB drive or shared folder on a different computer never inherits the previous computer's accounts, folders, or settings |
+| Run at Windows startup | Off *(default)* · On — launches automatically, minimized to the tray, when you log in. See **Reliability: updates and reboots** below. Off automatically whenever Portable Version is on, so a USB/portable install never leaves a startup entry pointing at a drive that may not be there next time |
+
+---
+
+## 🛡️ Reliability: updates and reboots
+
+*New in v2.4.* If Inbox Monitor or any scheduled automation (Follow-up Tracker, Daily Digest, a duplicate scan, or Scheduled Extraction) is running and the window is just minimized to the tray, the app is still very much alive and still holds its own files open. Two things used to go wrong as a result:
+
+- **Updating the app while it's running.** Replacing the app's files (or a "close running copies first" step in an installer) could fail, because a plain window-close is deliberately treated as "minimize to tray" rather than "exit" under the **On window close** setting above — so the process never actually went away and its files stayed locked. The app now protects against a second copy ever running at the same time (launching it again while it's already open just brings the existing window to the front), and supports a `--quit-for-update` command line flag that reliably closes a running copy — even one minimized in the tray with automation active — before an update replaces its files:
+  ```
+  "Beeran's Outlook Tools.exe" --quit-for-update
+  ```
+  Returns once the running copy has actually exited (or immediately if none was running), so a build or install script can run this as its own step right before copying in new files.
+- **An unattended reboot** (e.g. a Windows Update installing overnight) used to leave the app simply not running afterward, silently stranding every scheduled task until someone remembered to reopen it. Turning on **Run at Windows startup** above closes that gap — the app relaunches automatically, minimized to the tray, the next time you log in.
 
 ---
 
@@ -258,7 +270,7 @@ Version info, full feature list, third-party library attributions (including pys
 
 ## 🩺 Diagnostics
 
-*New in v2.4.* The connection light below only proves Outlook itself is running — it says nothing about whether one specific account's data is actually loading. A corrupted local cache (`.ost`) or a stuck sync can leave an account showing "connected" while its folders never populate. Diagnostics is split into three sub-tabs — **Accounts**, **Add-ins**, and **System** — each checking a different layer of what can go wrong.
+*New in v2.1.* The connection light below only proves Outlook itself is running — it says nothing about whether one specific account's data is actually loading. A corrupted local cache (`.ost`) or a stuck sync can leave an account showing "connected" while its folders never populate. Diagnostics is split into three sub-tabs — **Accounts**, **Add-ins**, and **System** — each checking a different layer of what can go wrong.
 
 ### Accounts
 
@@ -300,7 +312,7 @@ Two machine-level checks that commonly explain Outlook trouble which has nothing
 
 ## 🟢 Outlook Connection Status
 
-*New in v2.4.* A small dot and status label sit at the very bottom of the sidebar, below Settings, About, and Diagnostics, showing whether the app is currently talking to Outlook:
+*New in v2.1.* A small dot and status label sit at the very bottom of the sidebar, below Settings, About, and Diagnostics, showing whether the app is currently talking to Outlook:
 
 | Indicator | Meaning |
 |-----------|---------|
@@ -400,7 +412,10 @@ Use the **About** tab in the app to send a suggestion, or email:
 
 | Version | Highlights |
 |---------|------------|
-| **2.4** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Meeting Organizer Recovery (its own tab; recreates meetings left showing a stale organizer after a calendar backup/restore into a different or rebuilt account; detection now resolves mailbox addresses instead of just comparing display names, catching same-name/rebuilt-mailbox cases; added Browse All Meetings, a manual list-and-select fallback with an optional organizer filter, for when the automatic scan finds nothing) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics, now with Accounts / Add-ins / System sub-tabs — per-account health check with mailbox quota, Send/Receive activity, and cloud-sync data-file warnings, one-click repair for server-backed accounts, backup-file mount, COM add-in list with enable/disable, and system checks for duplicate Outlook processes and low disk space · Portable Version setting · build.bat now updates pip automatically before installing dependencies · faster startup and shutdown (pages now build on first visit instead of all at once) · fixed a startup crash (and a similar one from scheduled background scans) introduced by that same speed-up, where the app could try to update a tab's contents before that tab had been opened yet · exe/install folder name made version-less so future updates don't move the install path |
+| **2.4** | Single-instance protection — a second launch brings the already-running copy to the front instead of opening a confusing duplicate · new `--quit-for-update` command line flag lets an update process reliably close a running copy, even one minimized in the tray with automation active, before replacing this app's files · new "Run at Windows startup, minimized to the tray" Settings checkbox (off by default) so Inbox Monitor and scheduled automation come back on their own after an unattended reboot (e.g. a Windows Update) instead of staying stranded |
+| **2.3** | Faster perceived startup — right after the window opens, every tab and sub-tab is pre-built in small background chunks while the Welcome page shows "Please wait while we fully connect to Microsoft Outlook…", so the first click on any tab is usually already instant · the scanned account/folder list is now cached to config.json so the next launch can pre-build tabs with real data immediately instead of waiting on that launch's own live scan (the live scan still always runs and silently refreshes everything once done) · new "🔄 Rescan / Refresh Connection" button on the Welcome page to force a fresh full scan on demand, with its own working/done status message |
+| **2.2** | Fixes and refinements found testing the deployed v2.1 build. Meeting Organizer Recovery's detection now resolves each meeting's organizer (and the current account) to a real mailbox address rather than just comparing display names, so a same-name/rebuilt-mailbox case is caught correctly; added Browse All Meetings, a manual list-and-select fallback with an optional organizer filter, for when the automatic scan finds nothing · fixed a startup crash, and similar crashes from scheduled background scans (Daily Digest, Follow-up Tracker, duplicate email/contact scans, scheduled extraction), introduced by v2.1's lazy tab-loading speed-up, where the app could try to update a tab's contents before that tab had ever been opened that session · Meeting Inspector's subject field is now correctly optional, so Find with it left blank lists every meeting in the folder instead of refusing to search · the main window now reopens at the same size and screen position it was last closed at, instead of always resetting to a fixed centered size, and no longer renders oversized on a monitor running Windows display scaling above 100% |
+| **2.1** | Calendar Backup (.ics / .pst export, non-destructive) · Meeting Inspector (duplicate-copy and recurrence diagnostics for reappearing meetings) · Meeting Organizer Recovery (its own tab; recreates meetings left showing a stale organizer after a calendar backup/restore into a different or rebuilt account) · Account Archive (whole-account, multi-type, moves to a new-or-existing .pst) · Outlook connection status indicator with automatic reconnect · Diagnostics, now with Accounts / Add-ins / System sub-tabs — per-account health check with mailbox quota, Send/Receive activity, and cloud-sync data-file warnings, one-click repair for server-backed accounts, backup-file mount, COM add-in list with enable/disable, and system checks for duplicate Outlook processes and low disk space · Portable Version setting · build.bat now updates pip automatically before installing dependencies · faster startup and shutdown (pages now build on first visit instead of all at once) · exe/install folder name made version-less so future updates don't move the install path |
 | **2.0** | Native Outlook Rules Manager · Email Templates · Out of Office Manager · Bulk Archive · Email Size Analyzer · Folder Statistics · Contact Export/Import · Duplicate Calendar Detector · Grouped navigation with folder-style sub-tabs · 20 built-in alert sounds · Tamper detection · Proprietary license · Third-party LGPL compliance |
 | **1.5** | Follow-up Tracker · Daily Digest · Duplicate Email Detector · Duplicate Contact Detector (Delete/Merge review dialogs) · Bulk Email Detector with auto-unsubscribe and domain exclusions · Welcome landing page · Custom icon/logo · onedir build |
 | **1.4** | 4 built-in musical alert sounds · Per-folder repeat alerts |
